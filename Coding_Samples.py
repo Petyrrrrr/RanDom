@@ -127,7 +127,7 @@ def test_data_t(n):
     return X, Y
 ################################################
 
-def train_d(n_size, learning_rate=5e-4, N_epoch=50, print_every=20, batch_size=32, loss='liu', verbose=False): 
+def train_d(n_size, learn_rate=5e-4, N_epoch=50, print_per=20, batch_size=32, loss='liu', verbose=False): 
     batches = n_size//batch_size
     print("##### Starting N_epoch=%d epochs per data trial #####"%(N_epoch))
     X, Y = train_data_t(n_size)  #Generate training data
@@ -146,10 +146,10 @@ def train_d(n_size, learning_rate=5e-4, N_epoch=50, print_every=20, batch_size=3
     cst = MatConvert(np.ones((1,)), device, dtype) # set to 1 to meet liu etal objective
     if loss == 'liu':
         cst.requires_grad = False #Send c to fixed c=1
-        optimizer_u = torch.optim.Adam(list(model_u.parameters())+[sigmaOPT], lr=learning_rate)
+        optimizer_u = torch.optim.Adam(list(model_u.parameters())+[sigmaOPT], lr=learn_rate)
     elif loss == 'sharpe':
         cst.requires_grad = True #Optimize c on the run
-        optimizer_u = torch.optim.Adam(list(model_u.parameters())+[sigmaOPT]+[cst], lr=learning_rate)
+        optimizer_u = torch.optim.Adam(list(model_u.parameters())+[sigmaOPT]+[cst], lr=learn_rate)
     for _ in range(N_epoch):
         for ind in range(batches):
                 ep = torch.exp(epsilonOPT)/(1+torch.exp(epsilonOPT))
@@ -162,7 +162,7 @@ def train_d(n_size, learning_rate=5e-4, N_epoch=50, print_every=20, batch_size=3
                 optimizer_u.zero_grad()
                 STAT_u.backward(retain_graph=True)
                 optimizer_u.step()
-        if _ % print_every==0 and verbose: #print loss on last batch
+        if _ % print_per==0 and verbose: #print loss on last batch
             print("Epoch %d Loss: "%_ + str(STAT_u))
             print("sigma: ", sigmaOPT ** 2)
             print("sigma0: ", sigma0OPT ** 2)
