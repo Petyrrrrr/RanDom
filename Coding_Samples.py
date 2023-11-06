@@ -65,9 +65,12 @@ def kernelize(Fea, batch_size, S, sigma, sigma0, epsilon, cst):
     Dyy_org = Pdist2(Y_org, Y_org)
     Dxy_org = Pdist2(X_org, Y_org)
     #computes smoothed kernel matrix
-    Kx = cst*((1-epsilon) * torch.exp(-(Dxx / sigma0) - (Dxx_org / sigma))**L + epsilon * torch.exp(-Dxx_org / sigma))
-    Ky = cst*((1-epsilon) * torch.exp(-(Dyy / sigma0) - (Dyy_org / sigma))**L + epsilon * torch.exp(-Dyy_org / sigma))
-    Kxy = cst*((1-epsilon) * torch.exp(-(Dxy / sigma0) - (Dxy_org / sigma))**L + epsilon * torch.exp(-Dxy_org / sigma))
+    Kx = cst*((1-epsilon) * torch.exp(-(Dxx / sigma0) - (Dxx_org / sigma))**L + 
+              epsilon * torch.exp(-Dxx_org / sigma))
+    Ky = cst*((1-epsilon) * torch.exp(-(Dyy / sigma0) - (Dyy_org / sigma))**L + 
+              epsilon * torch.exp(-Dyy_org / sigma))
+    Kxy = cst*((1-epsilon) * torch.exp(-(Dxy / sigma0) - (Dxy_org / sigma))**L + 
+               epsilon * torch.exp(-Dxy_org / sigma))
     return Kx, Ky, Kxy
 
 def mmd_var(Fea, batch_size, S, sigma, sigma0, epsilon, cst):
@@ -126,7 +129,8 @@ def train_d(n_size, learning_rate=5e-4, N_epoch=50, print_every=20, batch_size=3
     print("##### Starting N_epoch=%d epochs per data trial #####"%(N_epoch))
     X, Y = train_data_t(n_size)  #Generate training data
     population_data=MatConvert(np.concatenate((X, Y), axis=0), device, dtype)
-    batched_data = [(X[i*batch_size : i*batch_size + batch_size], Y[i*batch_size : i*batch_size + batch_size]) for i in range(batches)]
+    batched_data = [(X[i*batch_size : i*batch_size + batch_size], 
+                     Y[i*batch_size : i*batch_size + batch_size]) for i in range(batches)]
     batched_data = [MatConvert(np.concatenate((X, Y), axis=0), device, dtype) for (X, Y) in batched_data]
     model_u = ConvNet_CIFAR10().cuda()
     #Kernel parameters, see paper
@@ -178,15 +182,18 @@ def train_d(n_size, learning_rate=5e-4, N_epoch=50, print_every=20, batch_size=3
 
 
 if __name__ == "__main__":
-    dataset_ddpm, dataset_cifar_test, dataset_cifar_train = load_diffusion_cifar_32() #cifar divided for studying covariate shifts
+    dataset_ddpm, dataset_cifar_test, dataset_cifar_train = load_diffusion_cifar_32() 
+    #cifar divided for studying covariate shifts
     mix_rate = 2 # for each corrupted data, match with mix_rate*cifar data points
     train_size, test_size = 5000, 2000
     
     # mix the dataset so that the mmd distance between hypotheses is not too large
-    train_mixed = np.concatenate((dataset_ddpm[ :train_size, :], dataset_cifar_train[ : train_size*mix_rate, :]), axis = 0)
+    train_mixed = np.concatenate((dataset_ddpm[ :train_size, :], 
+                                  dataset_cifar_train[ : train_size*mix_rate, :]), axis = 0)
     train_cifar = dataset_cifar_train[train_size*mix_rate : train_size*(2*mix_rate + 1), :]
 
-    test_mixed = np.concatenate((dataset_ddpm[train_size : train_size + test_size, :], dataset_cifar_test[: test_size*mix_rate, :]), axis = 0)
+    test_mixed = np.concatenate((dataset_ddpm[train_size : train_size + test_size, :], 
+                                 dataset_cifar_test[: test_size*mix_rate, :]), axis = 0)
     test_cifar = dataset_cifar_test[test_size*mix_rate: test_size*(2*mix_rate + 1), :]
     
     #generate a random shuffle over datasets and convert to tensor
@@ -205,7 +212,8 @@ if __name__ == "__main__":
     for _ in range(sets):
         print("##### Starting set %d of %d #####" %(_+1, sets))
         #kernel training
-        model_u, sigma, sigma0, ep, cst, X_train, Y_train=train_d(n_size, learning_rate=5e-4, N_epoch=80, print_every=20, batch_size=32)
+        model_u, sigma, sigma0, ep, cst, X_train, Y_train=train_d(n_size,
+                                                learning_rate=5e-4, N_epoch=80, print_every=20, batch_size=32)
         with torch.no_grad(): #inference phase
             print("Under this trained kernel, we run N = %d iterations of LFI: "%iter_lfi)
             for i in range(len(m_list)):
