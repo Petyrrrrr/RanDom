@@ -219,7 +219,7 @@ if __name__ == "__main__":
         print("##### Starting set %d of %d #####" %(_+1, sets))
         #kernel training
         model_u, sigma, sigma0, ep, cst, X_train, Y_train=train_d(n_size,
-                                                learning_rate=5e-4, N_epoch=80, print_every=20, batch_size=32)
+                    learning_rate=5e-4, N_epoch=80, print_every=20, batch_size=32)
         with torch.no_grad(): #inference phase
             print("Under this trained kernel, we run N = %d iterations of LFI: "%iter_lfi)
             for i in range(len(m_list)):
@@ -229,19 +229,25 @@ if __name__ == "__main__":
                 m_size = m_list[i]
                 for k in range(iter_lfi): 
                     stats=[]
-                    null_cal, _ = test_data_t(n_size) #sample calibration set for estimation of p-val using null data
+                    null_cal, _ = test_data_t(n_size) 
+                    #sample calibration set for estimation of p-val using null data
                     for j in range(iter_cal): #probing null data
                         Z_temp = null_cal[np.random.choice(n_size, m_size, replace=False), :]
-                        mmd_XZ = mmd_general(X_train, Z_temp, model_u, n_size, sigma, sigma0, ep, cst, device, dtype)[0] 
-                        mmd_YZ = mmd_general(Y_train, Z_temp, model_u, n_size, sigma, sigma0, ep, cst, device, dtype)[0]
-                        stats.append(float(mmd_XZ - mmd_YZ)) #difference of mmd distances as proxy for test statistics
+                        mmd_XZ = mmd_general(X_train, Z_temp, model_u, n_size, 
+                                             sigma, sigma0, ep, cst, device, dtype)[0] 
+                        mmd_YZ = mmd_general(Y_train, Z_temp, model_u, n_size, 
+                                             sigma, sigma0, ep, cst, device, dtype)[0]
+                        stats.append(float(mmd_XZ - mmd_YZ)) 
+                        #difference of mmd distances as proxy for test statistics
                     stats = np.sort(stats)
                     thres = stats[int(0.95*iter_cal)] #threshold at 95% quantile of null stats
                     _, mixed_test = test_data_t(m_size)
-                    mmd_XZ = mmd_general(X_train, mixed_test, model_u, n_size, sigma, cst, device, dtype)[0] 
-                    mmd_YZ = mmd_general(Y_train, mixed_test, model_u, n_size, sigma, cst, device, dtype)[0]
+                    mmd_XZ = mmd_general(X_train, mixed_test, model_u, n_size, 
+                                         sigma, cst, device, dtype)[0] 
+                    mmd_YZ = mmd_general(Y_train, mixed_test, model_u, n_size, 
+                                         sigma, cst, device, dtype)[0]
                     R_v[k] = mmd_XZ - mmd_YZ > thres  #rejected or not
-                    P_v[k] = np.searchsorted(stats, float(mmd_XZ - mmd_YZ), side="left")/iter_cal #p-value
+                    P_v[k] = np.searchsorted(stats, float(mmd_XZ - mmd_YZ))/iter_cal #p-value
                 print("n, m=",str(n_size)+str('  ')+str(m_size),"--- Rejection rate: ", R_v.mean())
                 print("n, m=",str(n_size)+str('  ')+str(m_size),"--- Expected p-val: ", P_v.mean())
                 results.append([n_size, m_size, R_v.mean(), P_v.mean()])
