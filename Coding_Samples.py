@@ -35,6 +35,11 @@ class ConvNet_CIFAR10(nn.Module):
         ds_size = 2
         self.adv_layer = nn.Sequential(nn.Linear(128 * ds_size ** 2, 300))
 
+
+
+
+
+
     def forward(self, img):
         out = self.model(img)
         out = out.view(out.shape[0], -1)
@@ -84,8 +89,7 @@ def mmd_general(X, Y, model_u, n, sigma, sigma0, epsilon, cst, device, dtype):
     '''
     computes mmd in feature_mmd which is quicker than mmd_var without computing variance
     '''
-    S = np.concatenate((X, Y), axis=0)
-    S = MatConvert(S, device, dtype)
+    S = MatConvert(np.concatenate((X, Y), axis=0), device, dtype)
     Fea = model_u(S) #Combine feature models into one
     Kx, Ky, Kxy = kernelize(Fea, n, S, sigma, sigma0, epsilon, cst)
     return mmd(Kx, Ky, Kxy, use_1sample_U=True, compute_variance=False)
@@ -123,8 +127,7 @@ def test_data_t(n):
     return X, Y
 ################################################
 
-def train_d(n_size, learning_rate=5e-4, N_epoch=50, print_every=20, batch_size=32, loss='liu', verbose=False):  
-    assert n_size%batch_size == 0 #n must be divisible by batch_size
+def train_d(n_size, learning_rate=5e-4, N_epoch=50, print_every=20, batch_size=32, loss='liu', verbose=False): 
     batches = n_size//batch_size
     print("##### Starting N_epoch=%d epochs per data trial #####"%(N_epoch))
     X, Y = train_data_t(n_size)  #Generate training data
@@ -201,6 +204,9 @@ if __name__ == "__main__":
     train_cifar = MatConvert(np.random.shuffle(train_cifar), device, dtype)
     test_mixed = MatConvert(np.random.shuffle(test_mixed), device, dtype)
     test_cifar = MatConvert(np.random.shuffle(test_cifar), device, dtype) 
+
+
+
 
     print("##### Starting LFI testing on kernel #####")
     sets=10 #sets of independent experiments
